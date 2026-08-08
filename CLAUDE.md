@@ -40,6 +40,19 @@ Every build runs `tools/gen_secrets.py` (wired in via `platformio.ini`'s `extra_
 `example.env` to `.env` and fill in real values; the build fails fast with a clear message if
 any required key is missing.
 
+`gen_secrets.py` also emits optional, non-secret config as the same kind of macro (so it can
+be overridden without touching committed code): `SECRET_CHART_TYPE` from `CHART_TYPE`
+(`candles` default, or `line`); the candle bucket size from `CANDLE_INTERVAL` (`minute`
+default, or `hour`/`day`/`week`), expanded into `SECRET_CANDLE_INTERVAL` (the T-Bank REST
+`CandleInterval` enum string), `SECRET_CANDLE_INTERVAL_SECONDS` (bucket duration, used to size
+the lookback window as `APP_CANDLES_MAX_POINTS * SECRET_CANDLE_INTERVAL_SECONDS`), and
+`SECRET_CANDLE_INTERVAL_LABEL` (short unit for the on-screen chart title, e.g. `"h"`); and the
+tracked instrument from `INSTRUMENT_TICKER` (`SECRET_INSTRUMENT_TICKER`), which also doubles
+as the on-screen title. Optional and defaults to `SiU6` (MOEX USD/RUB futures) if unset,
+matching prior behavior. To track a MOEX share instead, set e.g. `INSTRUMENT_TICKER=SBER` in
+`.env` — `tbank_find_figi()` takes the first API-tradable match for the ticker. See
+`example.env` for the full list with comments.
+
 ## Architecture
 
 Startup sequence, all orchestrated from `src/main.c`:
@@ -58,9 +71,10 @@ Startup sequence, all orchestrated from `src/main.c`:
 A single background task, once per boot:
 - Resolves `APP_INSTRUMENT_TICKER` (`src/app_config.h`) to a `figi` via
   `tbank_find_figi()`, retrying every 10s until it succeeds.
-- Then loops forever: polls last price every `APP_PRICE_POLL_INTERVAL_MS` and hourly candles
-  every `APP_CANDLES_POLL_INTERVAL_MS` (both defined in `app_config.h`), pushing results into
-  the UI. A failed candle fetch keeps the previous chart rather than clearing it.
+- Then loops forever: polls last price every `APP_PRICE_POLL_INTERVAL_MS` and candles every
+  `APP_CANDLES_POLL_INTERVAL_MS` (both defined in `app_config.h`), pushing results into the UI.
+  Candle bucket size (minute/hour/day/week) is `CANDLE_INTERVAL` in `.env`, see Secrets above.
+  A failed candle fetch keeps the previous chart rather than clearing it.
 
 ### LVGL thread safety
 
@@ -100,10 +114,10 @@ caller already holds the lock; they don't take it themselves.
 
 ### Configuration surface (`src/app_config.h`)
 
-Single place for: which instrument to track (ticker + class-code hint, used to disambiguate
-`FindInstrument` results), poll intervals, candle lookback window, REST base URL, WiFi retry
-count, and all LCD pin/timing constants. Changing the tracked instrument only requires editing
-`APP_INSTRUMENT_TICKER`/`APP_INSTRUMENT_CLASS_HINT`/`APP_INSTRUMENT_LABEL` here.
+Single place for: poll intervals, candle lookback window, REST base URL, WiFi retry count, and
+all LCD pin/timing constants. The tracked instrument (ticker, class-code hint, on-screen label)
+lives in `.env` instead (see Secrets above) since it's a per-deployment choice, not shared
+firmware config.
 
 ## Dependencies
 

@@ -9,6 +9,7 @@
 
 #include "app_config.h"
 #include "display.h"
+#include "secrets.h"
 #include "tbank_api.h"
 #include "ui.h"
 
@@ -29,9 +30,8 @@ static void market_task(void *arg)
 {
     char figi[TBANK_FIGI_LEN] = {0};
 
-    set_status("resolving " APP_INSTRUMENT_TICKER "...");
-    while (tbank_find_figi(APP_INSTRUMENT_TICKER, APP_INSTRUMENT_CLASS_HINT,
-                            figi, sizeof(figi)) != ESP_OK) {
+    set_status("resolving " SECRET_INSTRUMENT_TICKER "...");
+    while (tbank_find_figi(SECRET_INSTRUMENT_TICKER, figi, sizeof(figi)) != ESP_OK) {
         set_status("instrument lookup failed, retrying...");
         vTaskDelay(pdMS_TO_TICKS(10000));
     }
@@ -62,8 +62,7 @@ static void market_task(void *arg)
             (now - last_candles_poll) >= pdMS_TO_TICKS(APP_CANDLES_POLL_INTERVAL_MS)) {
             static tbank_candle_t candles[APP_CANDLES_MAX_POINTS];
             int count = 0;
-            if (tbank_get_minute_candles(figi, APP_CANDLES_LOOKBACK_MINUTES,
-                                          candles, APP_CANDLES_MAX_POINTS, &count) == ESP_OK) {
+            if (tbank_get_candles(figi, candles, APP_CANDLES_MAX_POINTS, &count) == ESP_OK) {
                 display_lvgl_lock();
                 ui_set_chart(candles, count);
                 display_lvgl_unlock();

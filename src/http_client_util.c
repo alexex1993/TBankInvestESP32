@@ -15,7 +15,7 @@
 static const char *TAG = "http";
 
 #define RESPONSE_INITIAL_CAP 2048
-#define RESPONSE_MAX_CAP     (64 * 1024)
+#define RESPONSE_MAX_CAP     (128 * 1024)
 
 typedef struct {
     char *buf;

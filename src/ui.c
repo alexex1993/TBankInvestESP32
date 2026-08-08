@@ -44,7 +44,7 @@ void ui_init(lv_display_t *disp)
     lv_obj_set_flex_align(scr, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     lv_obj_t *title = lv_label_create(scr);
-    lv_label_set_text(title, APP_INSTRUMENT_LABEL);
+    lv_label_set_text(title, SECRET_INSTRUMENT_TICKER);
     lv_obj_set_style_text_color(title, lv_color_hex(0x8899aa), 0);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
 
@@ -60,7 +60,8 @@ void ui_init(lv_display_t *disp)
 
     lv_obj_t *chart_title = lv_label_create(scr);
     char chart_title_buf[24];
-    snprintf(chart_title_buf, sizeof(chart_title_buf), "last %dm", APP_CANDLES_LOOKBACK_MINUTES);
+    snprintf(chart_title_buf, sizeof(chart_title_buf), "last %d%s",
+             APP_CANDLES_MAX_POINTS, SECRET_CANDLE_INTERVAL_LABEL);
     lv_label_set_text(chart_title, chart_title_buf);
     lv_obj_set_style_text_color(chart_title, lv_color_hex(0x556677), 0);
     lv_obj_set_style_text_font(chart_title, &lv_font_montserrat_14, 0);
@@ -199,7 +200,7 @@ static void render_candlesticks(const tbank_candle_t *candles, int count)
         int32_t slot_x = i * slot_w;
         int32_t cx = slot_x + slot_w / 2;
 
-        lv_color_t color = (c >= o) ? lv_color_hex(0x00e676) : lv_color_hex(0xff5252);
+        lv_color_t color = (c >= o) ? lv_color_hex(0xff5252) : lv_color_hex(0x00e676);
 
         lv_obj_t *wick = s_candle_wicks[i];
         lv_obj_set_style_bg_color(wick, color, 0);

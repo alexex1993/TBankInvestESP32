@@ -1,17 +1,16 @@
 #pragma once
 
 // ---- Instrument ---------------------------------------------------------
-// Resolved to a figi at startup via InstrumentsService/FindInstrument.
-#define APP_INSTRUMENT_TICKER        "SiU6"
-// Futures on MOEX trade under this class code; used only to prefer the
-// right match if FindInstrument returns several instruments named "SiU6".
-#define APP_INSTRUMENT_CLASS_HINT    "SPBFUT"
-#define APP_INSTRUMENT_LABEL         "SiU6"
+// The tracked instrument is configured via INSTRUMENT_TICKER in .env and
+// generated into src/secrets.h as SECRET_INSTRUMENT_TICKER -- see
+// tools/gen_secrets.py. Defaults to "SiU6" (MOEX USD/RUB futures) if unset.
 
 // ---- Polling --------------------------------------------------------
 #define APP_PRICE_POLL_INTERVAL_MS    (60 * 1000)
 #define APP_CANDLES_POLL_INTERVAL_MS  (60 * 1000)
-#define APP_CANDLES_LOOKBACK_MINUTES  24
+// Number of candles fetched/displayed. The lookback window this covers
+// depends on the candle bucket size (CANDLE_INTERVAL in .env, see
+// SECRET_CANDLE_INTERVAL_SECONDS): APP_CANDLES_MAX_POINTS * that duration.
 #define APP_CANDLES_MAX_POINTS        24
 
 // ---- T-Bank Invest REST gateway -----------------------------------------

@@ -11,6 +11,7 @@
 
 #include "app_config.h"
 #include "http_client_util.h"
+#include "secrets.h"
 
 static const char *TAG = "tbank_api";
 
@@ -82,11 +83,15 @@ static bool ci_equal(const char *a, const char *b)
     return *a == '\0' && *b == '\0';
 }
 
-esp_err_t tbank_find_figi(const char *ticker, const char *class_hint,
-                           char *figi_out, size_t figi_out_len)
+esp_err_t tbank_find_figi(const char *ticker, char *figi_out, size_t figi_out_len)
 {
     cJSON *req = cJSON_CreateObject();
     cJSON_AddStringToObject(req, "query", ticker);
+    // A bare ticker query (e.g. "SBER") can match hundreds of instruments --
+    // bonds, structured products, etc. with that string in the name, not
+    // just the share. Restricting to API-tradable instruments keeps the
+    // response well within RESPONSE_MAX_CAP.
+    cJSON_AddBoolToObject(req, "apiTradeAvailableFlag", true);
     char *req_str = cJSON_PrintUnformatted(req);
     cJSON_Delete(req);
 
@@ -114,19 +119,11 @@ esp_err_t tbank_find_figi(const char *ticker, const char *class_hint,
     const cJSON *item = NULL;
     cJSON_ArrayForEach(item, instruments) {
         const cJSON *item_ticker = cJSON_GetObjectItemCaseSensitive(item, "ticker");
-        const cJSON *item_class = cJSON_GetObjectItemCaseSensitive(item, "classCode");
         if (!first) {
             first = item;
         }
-        if (cJSON_IsString(item_ticker) && ci_equal(item_ticker->valuestring, ticker)) {
-            if (cJSON_IsString(item_class) && class_hint &&
-                strstr(item_class->valuestring, class_hint) != NULL) {
-                best = item;
-                break;
-            }
-            if (!best) {
-                best = item;
-            }
+        if (!best && cJSON_IsString(item_ticker) && ci_equal(item_ticker->valuestring, ticker)) {
+            best = item;
         }
     }
     if (!best) {
@@ -193,13 +190,13 @@ esp_err_t tbank_get_last_price(const char *figi, double *price_out)
     return result;
 }
 
-esp_err_t tbank_get_minute_candles(const char *figi, int lookback_minutes,
-                                    tbank_candle_t *out, int max_out, int *count_out)
+esp_err_t tbank_get_candles(const char *figi,
+                             tbank_candle_t *out, int max_out, int *count_out)
 {
     *count_out = 0;
 
     time_t now = time(NULL);
-    time_t from = now - (time_t)lookback_minutes * 60;
+    time_t from = now - (time_t)max_out * SECRET_CANDLE_INTERVAL_SECONDS;
     char from_str[32], to_str[32];
     format_rfc3339_utc(from, from_str, sizeof(from_str));
     format_rfc3339_utc(now, to_str, sizeof(to_str));
@@ -208,7 +205,7 @@ esp_err_t tbank_get_minute_candles(const char *figi, int lookback_minutes,
     cJSON_AddStringToObject(req, "instrumentId", figi);
     cJSON_AddStringToObject(req, "from", from_str);
     cJSON_AddStringToObject(req, "to", to_str);
-    cJSON_AddStringToObject(req, "interval", "CANDLE_INTERVAL_1_MIN");
+    cJSON_AddStringToObject(req, "interval", SECRET_CANDLE_INTERVAL);
     char *req_str = cJSON_PrintUnformatted(req);
     cJSON_Delete(req);
 

@@ -2,7 +2,7 @@
 
 <img width="2560" height="1440" alt="image" src="https://github.com/user-attachments/assets/0de0b6e5-4f33-4f6f-b689-d92bd2d09cb5" />
 
-#[YOUTUBE DEMONSTRATION](https://www.youtube.com/shorts/kVmrspDRLEU)
+[##YOUTUBE DEMONSTRATION](https://www.youtube.com/shorts/kVmrspDRLEU)
 
 Прошивка для платы **Waveshare ESP32-C6-LCD-1.47** (ESP32-C6-WROOM-1, 4 МБ флеша, LCD
 172×320 на контроллере ST7789, интерфейс SPI2). Устройство подключается к Wi-Fi,

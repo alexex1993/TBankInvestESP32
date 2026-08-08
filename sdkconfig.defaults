@@ -1,0 +1,20 @@
+# LVGL: enable the font sizes the UI uses (label text + the big price digits).
+CONFIG_LV_FONT_MONTSERRAT_14=y
+CONFIG_LV_FONT_MONTSERRAT_36=y
+CONFIG_LV_FONT_DEFAULT_MONTSERRAT_14=y
+
+# 16-bit RGB565 framebuffer, byte-swapped manually in the flush callback
+# (do not also enable CONFIG_LV_COLOR_16_SWAP -- that would double-swap).
+CONFIG_LV_COLOR_DEPTH_16=y
+
+# HTTPS to invest-public-api.tinkoff.ru needs a moderately large TLS buffer.
+CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN=4096
+
+# Give the WiFi/HTTP/LVGL tasks room; default main task stack is too small
+# once esp_http_client + cJSON parsing run on it.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# This board (Waveshare ESP32-C6-LCD-1.47) has 4MB flash, matching
+# board_upload.flash_size in platformio.ini.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
